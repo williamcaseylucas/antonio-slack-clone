@@ -12,50 +12,58 @@ import { Separator } from "@/components/ui/separator";
 import React, { useState } from "react";
 import { FaGithub } from "react-icons/fa";
 import { SignInFlow } from "../types";
-import { TriangleAlert } from "lucide-react";
-
 import { useAuthActions } from "@convex-dev/auth/react";
+import { TriangleAlert } from "lucide-react";
 
 interface SignInProps {
   setState: (state: SignInFlow) => void;
 }
 
-const SignInCard = ({ setState }: SignInProps) => {
-  const { signIn } = useAuthActions(); // signIn works for all providers and can be used to sign up an account if it didn't exist before
+const SignUpCard = ({ setState }: SignInProps) => {
+  const { signIn } = useAuthActions();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  const onPasswordSignIn = (e: React.FormEvent<HTMLFormElement>) => {
+  const onPasswordSetup = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setPending(true);
-    // provider as "password" via 'auth.ts'
+    // using 'password' provider
     signIn("password", {
+      name,
       email,
       password,
-      flow: "signIn", // /src/features/auth/types.ts
+      flow: "signUp",
     })
       .catch(() => {
-        setError("invalid email or password");
+        setError("Something went wrong");
       })
       .finally(() => {
         setPending(false);
       });
   };
 
-  const handleProviderSignIn = (value: "github" | "google") => {
+  const handleProviderSignUp = (value: "github" | "google") => {
     setPending(true);
     signIn(value).finally(() => {
       setPending(false);
     });
   };
+
   return (
     <Card className="w-full h-full p-8">
       <CardHeader className="px-0 pt-0">
-        <CardTitle>Login to continue</CardTitle>
+        <CardTitle>Sign up to continue</CardTitle>
         <CardDescription>
           Use your email or another service to continue
         </CardDescription>
@@ -67,9 +75,19 @@ const SignInCard = ({ setState }: SignInProps) => {
         </div>
       )}
       <CardContent className="space-y-5 px-0 pb-0">
-        <form onSubmit={onPasswordSignIn} className="space-y-2.5">
+        <form onSubmit={onPasswordSetup} className="space-y-2.5">
           <Input
-            disabled={false}
+            disabled={pending}
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+            }}
+            placeholder="Name"
+            type="name"
+            required
+          />
+          <Input
+            disabled={pending}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -79,12 +97,22 @@ const SignInCard = ({ setState }: SignInProps) => {
             required
           />
           <Input
-            disabled={false}
+            disabled={pending}
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
             }}
             placeholder="Password"
+            type="password"
+            required
+          />
+          <Input
+            disabled={pending}
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+            }}
+            placeholder="Confirm Password"
             type="password"
             required
           />
@@ -97,7 +125,7 @@ const SignInCard = ({ setState }: SignInProps) => {
           <Button
             disabled={pending}
             onClick={() => {
-              handleProviderSignIn("google");
+              handleProviderSignUp("google");
             }}
             variant="outline"
             size="lg"
@@ -108,7 +136,9 @@ const SignInCard = ({ setState }: SignInProps) => {
           </Button>
           <Button
             disabled={pending}
-            onClick={() => handleProviderSignIn("github")}
+            onClick={() => {
+              handleProviderSignUp("google");
+            }}
             variant="outline"
             size="lg"
             className="w-full relative"
@@ -118,12 +148,12 @@ const SignInCard = ({ setState }: SignInProps) => {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          Already have an account?{" "}
           <span
             className="text-sky-700 hover:underline cursor-pointer"
-            onClick={() => setState("signUp")}
+            onClick={() => setState("signIn")}
           >
-            Sign up
+            Sign in
           </span>
         </p>
       </CardContent>
@@ -131,4 +161,4 @@ const SignInCard = ({ setState }: SignInProps) => {
   );
 };
 
-export default SignInCard;
+export default SignUpCard;
